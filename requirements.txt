@@ -3,6 +3,7 @@ Pillow
 numpy
 opencv-python-headless
 torch
+torchvision
 transformers
 rembg
 onnxruntime
