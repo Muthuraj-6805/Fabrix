@@ -25,8 +25,20 @@ from flask import (
 
 app = Flask(__name__)
 
-# Maximum uploaded image size = 20 MB
-MAX_IMAGE_SIZE = 20 * 1024 * 1024
+
+# ------------------------------------------------------------
+# Maximum uploaded image size = 5 MB
+# ------------------------------------------------------------
+
+MAX_IMAGE_SIZE = 5 * 1024 * 1024
+
+# Also tell Flask to reject oversized requests early.
+app.config["MAX_CONTENT_LENGTH"] = MAX_IMAGE_SIZE
+
+
+# ------------------------------------------------------------
+# Base directory
+# ------------------------------------------------------------
 
 BASE_DIR = os.path.dirname(
     os.path.abspath(__file__)
@@ -47,7 +59,6 @@ CLOTHES_FOLDER = os.path.join(
 # TEMPORARY PROCESSED CLOTHING
 # ============================================================
 
-#
 # Processed clothing images are stored only in RAM.
 #
 # Nothing is written to disk.
@@ -62,7 +73,6 @@ CLOTHES_FOLDER = os.path.join(
 #     }
 #
 # }
-#
 
 temporary_clothes = {}
 
@@ -71,11 +81,28 @@ temporary_clothes = {}
 # TEMPORARY IMAGE SETTINGS
 # ============================================================
 
-# 10 minutes
-TEMP_IMAGE_LIFETIME = 10 * 60
+# 5 minutes
+TEMP_IMAGE_LIFETIME = 5 * 60
 
-# Maximum 50 processed images in RAM
-MAX_TEMPORARY_IMAGES = 50
+
+# Maximum 2 processed images in RAM
+MAX_TEMPORARY_IMAGES = 2
+
+
+# ============================================================
+# IMAGE PROCESSING LIMIT
+# ============================================================
+
+# Extremely large images can consume a lot of RAM during
+# PIL / NumPy / OpenCV processing.
+#
+# The uploaded file is still allowed up to 5 MB.
+# However, the image itself will be resized before AI
+# processing if its longest side is larger than this value.
+#
+# This significantly reduces RAM usage on Render.
+
+MAX_PROCESSING_DIMENSION = 1024
 
 
 # ============================================================
@@ -99,10 +126,9 @@ os.makedirs(
 #
 # Xenova/segformer_b2_clothes
 #
-# The quantized model is approximately 28.8 MB.
-#
 
 MODEL_NAME = "segformer_b2_clothes"
+
 
 MODEL_URL = (
     "https://huggingface.co/"
@@ -112,10 +138,12 @@ MODEL_URL = (
     "?download=true"
 )
 
+
 MODEL_FOLDER = os.path.join(
     BASE_DIR,
     "models"
 )
+
 
 MODEL_PATH = os.path.join(
     MODEL_FOLDER,
@@ -124,11 +152,9 @@ MODEL_PATH = os.path.join(
 
 
 # ============================================================
-# SEGFORMER CONFIGURATION
+# SEGFORMER CLASSES
 # ============================================================
 
-#
-# The model has 18 classes.
 #
 # 0  Background
 # 1  Hat
@@ -170,25 +196,14 @@ BAG = 16
 SCARF = 17
 
 
-# ------------------------------------------------------------
-# Classes that should remain visible.
+# ============================================================
+# CLOTHING CLASSES TO KEEP
+# ============================================================
+
 #
-# These are clothing / clothing-accessory classes.
+# These are the clothing / clothing-accessory classes
+# that should remain visible.
 #
-# We intentionally DO NOT include:
-#
-# Background
-# Hat
-# Hair
-# Sunglasses
-# Shoes
-# Face
-# Legs
-# Arms
-# Bag
-#
-# because the goal is to extract the clothing item.
-# ------------------------------------------------------------
 
 CLOTHING_CLASSES = {
     UPPER_CLOTHES,
@@ -204,18 +219,15 @@ CLOTHING_CLASSES = {
 # MODEL INPUT SETTINGS
 # ============================================================
 
-#
-# SegFormer B2 Clothes uses a 512 x 512 image processor
-# configuration.
-#
-
 MODEL_INPUT_WIDTH = 512
 MODEL_INPUT_HEIGHT = 512
+
 
 IMAGE_MEAN = np.array(
     [0.485, 0.456, 0.406],
     dtype=np.float32
 )
+
 
 IMAGE_STD = np.array(
     [0.229, 0.224, 0.225],
@@ -234,6 +246,18 @@ print("========================================")
 
 print("\nSegmentation model:")
 print(MODEL_NAME)
+
+print("\nUpload limit:")
+print("5 MB")
+
+print("\nTemporary image lifetime:")
+print("5 minutes")
+
+print("\nMaximum temporary images:")
+print("2")
+
+print("\nMaximum processing dimension:")
+print(f"{MAX_PROCESSING_DIMENSION}px")
 
 
 # ============================================================
@@ -266,7 +290,7 @@ def download_model_if_needed():
     )
 
     print(
-        "This is approximately 28.8 MB."
+        "Approximately 28.8 MB."
     )
 
     temporary_model_path = (
@@ -296,9 +320,11 @@ def download_model_if_needed():
         ):
 
             try:
+
                 os.remove(
                     temporary_model_path
                 )
+
             except Exception:
                 pass
 
@@ -320,24 +346,43 @@ download_model_if_needed()
 
 
 # ------------------------------------------------------------
-# Configure ONNX Runtime to use CPU.
-#
-# We deliberately use one thread to reduce memory usage on
-# Render Free.
+# Configure ONNX Runtime for low memory usage.
 # ------------------------------------------------------------
 
 session_options = ort.SessionOptions()
 
+
+# Only one thread.
 session_options.intra_op_num_threads = 1
 session_options.inter_op_num_threads = 1
 
+
+# Sequential execution generally uses less memory.
 session_options.execution_mode = (
     ort.ExecutionMode.ORT_SEQUENTIAL
 )
 
+
+# Basic optimization instead of full optimization.
+#
+# This reduces startup memory pressure.
 session_options.graph_optimization_level = (
-    ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
 )
+
+
+# Disable memory pattern optimization.
+#
+# This can reduce retained memory for this
+# small single-request server.
+session_options.enable_mem_pattern = False
+
+
+# Disable CPU memory arena.
+#
+# This prevents ONNX Runtime from keeping a large
+# reusable memory arena after inference.
+session_options.enable_cpu_mem_arena = False
 
 
 try:
@@ -363,9 +408,9 @@ except Exception as error:
     raise
 
 
-# ------------------------------------------------------------
-# Get model input/output names.
-# ------------------------------------------------------------
+# ============================================================
+# MODEL INPUT / OUTPUT INFORMATION
+# ============================================================
 
 MODEL_INPUT_NAME = (
     segmentation_session
@@ -373,10 +418,19 @@ MODEL_INPUT_NAME = (
     .name
 )
 
+
 MODEL_OUTPUTS = (
     segmentation_session
     .get_outputs()
 )
+
+
+if not MODEL_OUTPUTS:
+
+    raise RuntimeError(
+        "SegFormer model has no outputs."
+    )
+
 
 MODEL_OUTPUT_NAME = (
     MODEL_OUTPUTS[0].name
@@ -408,14 +462,11 @@ def prepare_model_input(image):
     # Convert to RGB
     # --------------------------------------------------------
 
-    image = image.convert(
-        "RGB"
-    )
+    image = image.convert("RGB")
+
 
     # --------------------------------------------------------
-    # Resize to model input size.
-    #
-    # SegFormer B2 uses 512 x 512 preprocessing.
+    # Resize to 512 x 512
     # --------------------------------------------------------
 
     resized = image.resize(
@@ -426,8 +477,9 @@ def prepare_model_input(image):
         Image.Resampling.BILINEAR
     )
 
+
     # --------------------------------------------------------
-    # Convert to float32 NumPy array
+    # Convert to float32
     # --------------------------------------------------------
 
     image_array = np.asarray(
@@ -435,21 +487,23 @@ def prepare_model_input(image):
         dtype=np.float32
     )
 
+
     # --------------------------------------------------------
-    # Convert [0, 255] -> [0, 1]
+    # Normalize from 0-255 to 0-1
     # --------------------------------------------------------
 
-    image_array = (
-        image_array / 255.0
+    image_array *= (
+        1.0 / 255.0
     )
 
+
     # --------------------------------------------------------
-    # Normalize using ImageNet mean/std.
+    # ImageNet normalization
     # --------------------------------------------------------
 
-    image_array = (
-        image_array - IMAGE_MEAN
-    ) / IMAGE_STD
+    image_array -= IMAGE_MEAN
+    image_array /= IMAGE_STD
+
 
     # --------------------------------------------------------
     # HWC -> CHW
@@ -460,9 +514,8 @@ def prepare_model_input(image):
         (2, 0, 1)
     )
 
+
     # --------------------------------------------------------
-    # Add batch dimension
-    #
     # CHW -> NCHW
     # --------------------------------------------------------
 
@@ -471,6 +524,11 @@ def prepare_model_input(image):
         axis=0
     )
 
+
+    # --------------------------------------------------------
+    # Make contiguous.
+    # --------------------------------------------------------
+
     return np.ascontiguousarray(
         image_array,
         dtype=np.float32
@@ -478,7 +536,7 @@ def prepare_model_input(image):
 
 
 # ============================================================
-# SEGFORMER OUTPUT -> CLASS MASK
+# OUTPUT -> CLASS MAP
 # ============================================================
 
 def convert_model_output_to_class_map(
@@ -491,14 +549,15 @@ def convert_model_output_to_class_map(
         output
     )
 
+
     # --------------------------------------------------------
-    # Expected semantic-segmentation output is normally:
+    # Expected:
     #
-    # [batch, classes, height, width]
+    # [1, classes, height, width]
     #
-    # Example:
+    # or:
     #
-    # [1, 18, H, W]
+    # [classes, height, width]
     # --------------------------------------------------------
 
     if output.ndim == 4:
@@ -510,33 +569,11 @@ def convert_model_output_to_class_map(
                 + str(output.shape)
             )
 
-        # ----------------------------------------------------
-        # Argmax across class/channel dimension.
-        # ----------------------------------------------------
-
-        class_map = np.argmax(
-            output[0],
-            axis=0
-        ).astype(
-            np.uint8
-        )
+        logits = output[0]
 
     elif output.ndim == 3:
 
-        #
-        # Some ONNX exports may remove the batch dimension.
-        #
-        # Handle:
-        #
-        # [classes, H, W]
-        #
-
-        class_map = np.argmax(
-            output,
-            axis=0
-        ).astype(
-            np.uint8
-        )
+        logits = output
 
     else:
 
@@ -545,8 +582,33 @@ def convert_model_output_to_class_map(
             + str(output.shape)
         )
 
+
     # --------------------------------------------------------
-    # Convert class map to PIL image.
+    # Argmax.
+    #
+    # This creates a compact uint8 class map.
+    # --------------------------------------------------------
+
+    class_map = np.argmax(
+        logits,
+        axis=0
+    ).astype(
+        np.uint8
+    )
+
+
+    # --------------------------------------------------------
+    # Release logits as soon as possible.
+    # --------------------------------------------------------
+
+    del logits
+
+
+    # --------------------------------------------------------
+    # Resize class IDs.
+    #
+    # NEAREST is required because class IDs must not
+    # be interpolated.
     # --------------------------------------------------------
 
     class_map_image = Image.fromarray(
@@ -554,14 +616,9 @@ def convert_model_output_to_class_map(
         mode="L"
     )
 
-    # --------------------------------------------------------
-    # Resize class labels to original image dimensions.
-    #
-    # IMPORTANT:
-    #
-    # NEAREST is used because class IDs must not be
-    # interpolated.
-    # --------------------------------------------------------
+
+    del class_map
+
 
     class_map_image = class_map_image.resize(
         (
@@ -570,6 +627,7 @@ def convert_model_output_to_class_map(
         ),
         Image.Resampling.NEAREST
     )
+
 
     return np.asarray(
         class_map_image,
@@ -585,14 +643,11 @@ def create_clothing_mask(
     class_map
 ):
 
-    # --------------------------------------------------------
-    # Start with completely transparent/removed mask.
-    # --------------------------------------------------------
-
     mask = np.zeros(
         class_map.shape,
         dtype=np.uint8
     )
+
 
     # --------------------------------------------------------
     # Keep only clothing classes.
@@ -604,7 +659,70 @@ def create_clothing_mask(
             class_map == class_id
         ] = 255
 
+
     return mask
+
+
+# ============================================================
+# RESIZE LARGE IMAGE
+# ============================================================
+
+def resize_for_processing(image):
+
+    width, height = image.size
+
+
+    longest_side = max(
+        width,
+        height
+    )
+
+
+    if longest_side <= MAX_PROCESSING_DIMENSION:
+
+        return image
+
+
+    scale = (
+        MAX_PROCESSING_DIMENSION
+        / float(longest_side)
+    )
+
+
+    new_width = max(
+        1,
+        int(width * scale)
+    )
+
+
+    new_height = max(
+        1,
+        int(height * scale)
+    )
+
+
+    print(
+        "Large image detected."
+    )
+
+    print(
+        "Resizing from:",
+        image.size
+    )
+
+    print(
+        "Resizing to:",
+        (new_width, new_height)
+    )
+
+
+    return image.resize(
+        (
+            new_width,
+            new_height
+        ),
+        Image.Resampling.LANCZOS
+    )
 
 
 # ============================================================
@@ -613,47 +731,55 @@ def create_clothing_mask(
 
 def segment_image(image):
 
-    """
-    Segment the uploaded image using SegFormer B2 Clothes.
-
-    The model predicts semantic classes such as:
-
-        Upper-clothes
-        Skirt
-        Pants
-        Dress
-        Belt
-        Scarf
-
-    The final mask keeps only those clothing classes.
-
-    Background, head, face, hair, arms, legs, shoes, etc.
-    are removed.
-    """
-
     print(
         "Preparing image for SegFormer..."
     )
 
-    model_input = prepare_model_input(
+
+    # --------------------------------------------------------
+    # Reduce very large images before creating NumPy arrays.
+    # --------------------------------------------------------
+
+    processing_image = resize_for_processing(
         image
     )
 
+
+    original_width = processing_image.width
+    original_height = processing_image.height
+
+
     # --------------------------------------------------------
-    # Run ONNX inference
+    # Prepare model input.
     # --------------------------------------------------------
+
+    model_input = prepare_model_input(
+        processing_image
+    )
+
 
     print(
         "Running SegFormer inference..."
     )
 
-    outputs = segmentation_session.run(
-        None,
-        {
-            MODEL_INPUT_NAME:
-                model_input
-        }
-    )
+
+    try:
+
+        outputs = segmentation_session.run(
+            [
+                MODEL_OUTPUT_NAME
+            ],
+            {
+                MODEL_INPUT_NAME:
+                    model_input
+            }
+        )
+
+    finally:
+
+        # Release input immediately.
+        del model_input
+
 
     if not outputs:
 
@@ -661,55 +787,57 @@ def segment_image(image):
             "SegFormer returned no output."
         )
 
-    # --------------------------------------------------------
-    # Get segmentation output.
-    # --------------------------------------------------------
 
     raw_output = outputs[0]
+
 
     print(
         "SegFormer output shape:",
         raw_output.shape
     )
 
+
     # --------------------------------------------------------
-    # Convert logits to class map.
+    # Convert model output to class map.
     # --------------------------------------------------------
 
     class_map = (
         convert_model_output_to_class_map(
             raw_output,
-            image.width,
-            image.height
+            original_width,
+            original_height
         )
     )
 
+
     # --------------------------------------------------------
-    # Convert class map to clothing-only mask.
+    # Release raw ONNX output.
+    # --------------------------------------------------------
+
+    del raw_output
+    del outputs
+
+
+    # --------------------------------------------------------
+    # Convert to clothing-only mask.
     # --------------------------------------------------------
 
     mask = create_clothing_mask(
         class_map
     )
 
+
+    del class_map
+
+
     # --------------------------------------------------------
-    # Validate shape.
+    # Return mask and processing image.
     # --------------------------------------------------------
 
-    expected_shape = (
-        image.height,
-        image.width
+    return (
+        processing_image,
+        mask
     )
-
-    if mask.shape != expected_shape:
-
-        raise ValueError(
-            "Invalid clothing mask shape: "
-            f"{mask.shape}. "
-            f"Expected: {expected_shape}."
-        )
-
-    return mask
 
 
 # ============================================================
@@ -720,14 +848,12 @@ def clean_mask(mask):
 
     import cv2
 
-    # --------------------------------------------------------
-    # Make sure mask is uint8.
-    # --------------------------------------------------------
 
     mask = np.asarray(
         mask,
         dtype=np.uint8
     )
+
 
     # --------------------------------------------------------
     # Remove tiny isolated regions.
@@ -738,11 +864,13 @@ def clean_mask(mask):
         np.uint8
     )
 
+
     mask = cv2.morphologyEx(
         mask,
         cv2.MORPH_OPEN,
         kernel_small
     )
+
 
     # --------------------------------------------------------
     # Fill small gaps.
@@ -753,11 +881,13 @@ def clean_mask(mask):
         np.uint8
     )
 
+
     mask = cv2.morphologyEx(
         mask,
         cv2.MORPH_CLOSE,
         kernel_medium
     )
+
 
     # --------------------------------------------------------
     # Smooth edges.
@@ -768,6 +898,7 @@ def clean_mask(mask):
         (5, 5),
         0
     )
+
 
     return mask
 
@@ -782,19 +913,21 @@ def create_transparent_image(
 ):
 
     # --------------------------------------------------------
-    # Convert original image to RGBA.
+    # Convert to RGBA.
     # --------------------------------------------------------
 
     image = image.convert(
         "RGBA"
     )
 
-    image_array = np.array(
+
+    image_array = np.asarray(
         image
-    )
+    ).copy()
+
 
     # --------------------------------------------------------
-    # Validate mask size.
+    # Validate mask.
     # --------------------------------------------------------
 
     expected_shape = (
@@ -802,10 +935,12 @@ def create_transparent_image(
         image.width
     )
 
+
     mask = np.asarray(
         mask,
         dtype=np.uint8
     )
+
 
     if mask.shape != expected_shape:
 
@@ -815,19 +950,22 @@ def create_transparent_image(
             f"Image: {expected_shape}"
         )
 
+
     # --------------------------------------------------------
-    # Set mask as alpha channel.
-    #
-    # 255 = visible
-    # 0   = transparent
+    # Set alpha channel.
     # --------------------------------------------------------
 
     image_array[:, :, 3] = mask
+
 
     result = Image.fromarray(
         image_array,
         "RGBA"
     )
+
+
+    del image_array
+
 
     return result
 
@@ -845,6 +983,7 @@ def crop_to_selected_area(
         mask > 20
     )
 
+
     # --------------------------------------------------------
     # Nothing detected.
     # --------------------------------------------------------
@@ -857,6 +996,7 @@ def crop_to_selected_area(
 
         return image
 
+
     # --------------------------------------------------------
     # Bounding box.
     # --------------------------------------------------------
@@ -866,20 +1006,24 @@ def crop_to_selected_area(
         int(xs.min()) - 10
     )
 
+
     max_x = min(
         image.width,
         int(xs.max()) + 11
     )
+
 
     min_y = max(
         0,
         int(ys.min()) - 10
     )
 
+
     max_y = min(
         image.height,
         int(ys.max()) + 11
     )
+
 
     return image.crop(
         (
@@ -914,6 +1058,7 @@ def process_image(image):
         image.size
     )
 
+
     # --------------------------------------------------------
     # Segment.
     # --------------------------------------------------------
@@ -922,9 +1067,18 @@ def process_image(image):
         "Running clothing segmentation..."
     )
 
-    mask = segment_image(
+
+    processing_image, mask = segment_image(
         image
     )
+
+
+    # --------------------------------------------------------
+    # Release original image if it is a separate object.
+    # --------------------------------------------------------
+
+    del image
+
 
     # --------------------------------------------------------
     # Clean mask.
@@ -934,9 +1088,11 @@ def process_image(image):
         "Cleaning segmentation..."
     )
 
+
     mask = clean_mask(
         mask
     )
+
 
     # --------------------------------------------------------
     # Create transparent image.
@@ -946,10 +1102,12 @@ def process_image(image):
         "Creating transparent PNG..."
     )
 
+
     result = create_transparent_image(
-        image,
+        processing_image,
         mask
     )
+
 
     # --------------------------------------------------------
     # Crop.
@@ -959,14 +1117,20 @@ def process_image(image):
         "Cropping result..."
     )
 
+
     result = crop_to_selected_area(
         result,
         mask
     )
 
+
     # --------------------------------------------------------
-    # Final information.
+    # Release temporary arrays.
     # --------------------------------------------------------
+
+    del processing_image
+    del mask
+
 
     print(
         "Final size:",
@@ -976,6 +1140,7 @@ def process_image(image):
     print(
         "Processing complete."
     )
+
 
     return result
 
@@ -990,9 +1155,13 @@ def cleanup_expired_images():
 
     expired_tokens = []
 
-    for token, item in temporary_clothes.items():
+
+    for token, item in list(
+        temporary_clothes.items()
+    ):
 
         created_time = item["created"]
+
 
         if (
             current_time - created_time
@@ -1004,12 +1173,14 @@ def cleanup_expired_images():
                 token
             )
 
+
     for token in expired_tokens:
 
         temporary_clothes.pop(
             token,
             None
         )
+
 
     if expired_tokens:
 
@@ -1029,6 +1200,7 @@ def store_temporary_image(
 
     cleanup_expired_images()
 
+
     # --------------------------------------------------------
     # Prevent unlimited RAM usage.
     # --------------------------------------------------------
@@ -1044,10 +1216,18 @@ def store_temporary_image(
                 temporary_clothes[token]["created"]
         )
 
+
         temporary_clothes.pop(
             oldest_token,
             None
         )
+
+
+        print(
+            "Removed oldest temporary image "
+            "because the RAM limit was reached."
+        )
+
 
     # --------------------------------------------------------
     # Generate unique token.
@@ -1055,17 +1235,16 @@ def store_temporary_image(
 
     token = uuid.uuid4().hex
 
+
     # --------------------------------------------------------
     # Store image in RAM.
     # --------------------------------------------------------
 
     temporary_clothes[token] = {
-
         "data": image_data,
-
         "created": time.time()
-
     }
+
 
     return token
 
@@ -1106,9 +1285,6 @@ def get_clothes():
 
     clothes = []
 
-    # --------------------------------------------------------
-    # Supported image extensions.
-    # --------------------------------------------------------
 
     allowed_extensions = {
         ".jpg",
@@ -1117,9 +1293,6 @@ def get_clothes():
         ".webp"
     }
 
-    # --------------------------------------------------------
-    # Read clothes folder.
-    # --------------------------------------------------------
 
     try:
 
@@ -1136,9 +1309,6 @@ def get_clothes():
 
         return jsonify([])
 
-    # --------------------------------------------------------
-    # Create clothing list.
-    # --------------------------------------------------------
 
     for filename in sorted(
         filenames,
@@ -1150,19 +1320,23 @@ def get_clothes():
             filename
         )
 
+
         if not os.path.isfile(
             file_path
         ):
 
             continue
 
+
         extension = os.path.splitext(
             filename
         )[1].lower()
 
+
         if extension not in allowed_extensions:
 
             continue
+
 
         clothes.append(
             {
@@ -1170,6 +1344,7 @@ def get_clothes():
                 "url": "/clothes/" + filename
             }
         )
+
 
     return jsonify(
         clothes
@@ -1197,16 +1372,6 @@ def serve_clothing(
 # PROCESS UPLOADED CLOTHING
 # ============================================================
 
-#
-# IMPORTANT:
-#
-# Uploaded image is processed in memory.
-#
-# Processed PNG is stored temporarily in RAM.
-#
-# Nothing is saved to disk.
-#
-
 @app.route(
     "/process",
     methods=["POST"]
@@ -1229,7 +1394,9 @@ def process():
                 }
             ), 400
 
+
         file = request.files["image"]
+
 
         if (
             not file
@@ -1245,11 +1412,13 @@ def process():
                 }
             ), 400
 
+
         # ----------------------------------------------------
-        # Read image into memory.
+        # Read image.
         # ----------------------------------------------------
 
         image_data = file.read()
+
 
         if len(image_data) == 0:
 
@@ -1261,8 +1430,9 @@ def process():
                 }
             ), 400
 
+
         # ----------------------------------------------------
-        # 20 MB size limit.
+        # 5 MB size limit.
         # ----------------------------------------------------
 
         if len(image_data) > MAX_IMAGE_SIZE:
@@ -1272,9 +1442,10 @@ def process():
                     "success": False,
                     "error":
                         "Image is too large. "
-                        "Maximum size is 20 MB."
+                        "Maximum size is 5 MB."
                 }
             ), 400
+
 
         # ----------------------------------------------------
         # Open image.
@@ -1300,6 +1471,14 @@ def process():
                 }
             ), 400
 
+
+        # ----------------------------------------------------
+        # Release original uploaded bytes.
+        # ----------------------------------------------------
+
+        del image_data
+
+
         # ----------------------------------------------------
         # Convert to RGB.
         # ----------------------------------------------------
@@ -1307,6 +1486,7 @@ def process():
         image = image.convert(
             "RGB"
         )
+
 
         # ----------------------------------------------------
         # Process image.
@@ -1316,18 +1496,23 @@ def process():
             image
         )
 
+
         # ----------------------------------------------------
         # Convert result to PNG.
         # ----------------------------------------------------
 
         output_buffer = io.BytesIO()
 
+
         result.save(
             output_buffer,
-            format="PNG"
+            format="PNG",
+            optimize=True
         )
 
+
         output_buffer.seek(0)
+
 
         # ----------------------------------------------------
         # Get PNG bytes.
@@ -1337,6 +1522,16 @@ def process():
             output_buffer.getvalue()
         )
 
+
+        # ----------------------------------------------------
+        # Release PIL objects.
+        # ----------------------------------------------------
+
+        output_buffer.close()
+
+        result.close()
+
+
         # ----------------------------------------------------
         # Store processed image in RAM.
         # ----------------------------------------------------
@@ -1344,6 +1539,7 @@ def process():
         token = store_temporary_image(
             processed_data
         )
+
 
         # ----------------------------------------------------
         # Create temporary URL.
@@ -1353,6 +1549,7 @@ def process():
             "/temporary-clothes/"
             + token
         )
+
 
         print(
             "\nProcessed clothing stored "
@@ -1364,6 +1561,12 @@ def process():
             image_url
         )
 
+        print(
+            "Temporary images currently stored:",
+            len(temporary_clothes)
+        )
+
+
         # ----------------------------------------------------
         # Return JSON.
         # ----------------------------------------------------
@@ -1374,6 +1577,7 @@ def process():
                 "url": image_url
             }
         )
+
 
     except Exception as error:
 
@@ -1389,6 +1593,22 @@ def process():
                     "An error occurred while processing the image."
             }
         ), 500
+
+
+# ============================================================
+# HANDLE FLASK 413
+# ============================================================
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+
+    return jsonify(
+        {
+            "success": False,
+            "error":
+                "Image is too large. Maximum size is 5 MB."
+        }
+    ), 413
 
 
 # ============================================================
@@ -1408,6 +1628,7 @@ def serve_temporary_clothing(
 
     cleanup_expired_images()
 
+
     # --------------------------------------------------------
     # Find image.
     # --------------------------------------------------------
@@ -1415,6 +1636,7 @@ def serve_temporary_clothing(
     item = temporary_clothes.get(
         token
     )
+
 
     # --------------------------------------------------------
     # Image missing / expired.
@@ -1430,6 +1652,7 @@ def serve_temporary_clothing(
                     "has expired or does not exist."
             }
         ), 404
+
 
     # --------------------------------------------------------
     # Return PNG directly from RAM.
@@ -1485,11 +1708,11 @@ if __name__ == "__main__":
     )
 
     print(
-        "\nClothes folder:"
+        "\nUpload limit:"
     )
 
     print(
-        CLOTHES_FOLDER
+        "5 MB"
     )
 
     print(
@@ -1527,6 +1750,7 @@ if __name__ == "__main__":
     print(
         "\nPress CTRL+C to stop the server."
     )
+
 
     app.run(
         host="127.0.0.1",
