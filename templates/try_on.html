@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Fabrix - Try On</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/try_on.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+
+<div class="try-on-page">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="try-on-header">
+
+        <h1 class="brand">
+            Fabrix<span>.</span>
+        </h1>
+
+        <p class="subtitle">
+            Virtual Try On
+        </p>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN TRY-ON AREA
+    ====================================================== -->
+
+    <main class="try-on-container">
+
+
+        <!-- =================================================
+             HOW TO USE
+        ================================================== -->
+
+        <section class="gesture-card">
+
+            <h2>
+                How to Use
+            </h2>
+
+
+            <div class="gesture-list">
+
+
+                <!-- ONE HAND -->
+
+                <div class="gesture-item">
+
+                    <div class="gesture-icon">
+                        🤏
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            One-Hand Pinch
+                        </h3>
+
+                        <p>
+                            Pinch your thumb and index finger
+                            to grab and drag the clothing.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- TWO HAND -->
+
+                <div class="gesture-item">
+
+                    <div class="gesture-icon">
+                        🤏🤏
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Two-Hand Pinch
+                        </h3>
+
+                        <p>
+                            Pinch with both hands and move
+                            your hands apart or closer together
+                            to resize the clothing.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CAMERA -->
+
+                <div class="gesture-item">
+
+                    <div class="gesture-icon">
+                        📷☝️
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Capture Photo
+                        </h3>
+
+                        <p>
+                            Point your index finger at the
+                            camera button for 2 seconds to
+                            capture your try-on photo.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- MOUSE -->
+
+                <div class="gesture-item">
+
+                    <div class="gesture-icon">
+                        🖱️
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Mouse / Touch
+                        </h3>
+
+                        <p>
+                            You can also drag the clothing
+                            manually using your mouse or touch.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CAMERA AREA
+        ================================================== -->
+
+        <section class="camera-card">
+
+            <div class="camera-header">
+
+                <h2>
+                    Live Try On
+                </h2>
+
+                <p>
+                    Move your body and use your hands to position
+                    and resize the clothing.
+                </p>
+
+            </div>
+
+
+            <!-- =================================================
+                 CAMERA / CANVAS
+            ================================================== -->
+
+            <div
+                class="camera-wrapper"
+                id="cameraWrapper"
+            >
+
+                <!-- Hidden camera source -->
+
+                <video
+                    id="video"
+                    autoplay
+                    playsinline
+                    muted
+                ></video>
+
+
+                <!-- Main rendered output -->
+
+                <canvas
+                    id="output"
+                ></canvas>
+
+
+                <!-- =================================================
+                     VIRTUAL CAMERA BUTTON
+                ================================================== -->
+
+                <button
+                    type="button"
+                    id="cameraCaptureBtn"
+                    class="camera-capture-button"
+                    aria-label="Capture photo"
+                >
+
+                    <span class="camera-icon">
+                        📷
+                    </span>
+
+                </button>
+
+
+                <!-- =================================================
+                     CAPTURE COUNTDOWN
+                ================================================== -->
+
+                <div
+                    id="captureCountdown"
+                    class="capture-countdown"
+                    aria-live="assertive"
+                >
+                    5
+                </div>
+
+
+                <!-- =================================================
+                     CAMERA LOADING
+                ================================================== -->
+
+                <div
+                    class="camera-loading"
+                    id="cameraLoading"
+                >
+
+                    <div class="loading-spinner"></div>
+
+                    <p>
+                        Starting camera...
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 STATUS
+            ================================================== -->
+
+            <div
+                class="status"
+                id="status"
+            >
+                Starting camera...
+            </div>
+
+
+        </section>
+
+
+        <!-- =====================================================
+             CAPTURED IMAGE
+        ====================================================== -->
+
+        <section
+            class="captured-image-card"
+            id="capturedImageSection"
+            hidden
+        >
+
+            <div class="captured-image-header">
+
+                <h2>
+                    Captured Image
+                </h2>
+
+                <p>
+                    Your virtual try-on photo is ready.
+                </p>
+
+            </div>
+
+
+            <div class="captured-image-wrapper">
+
+                <img
+                    id="capturedImage"
+                    src=""
+                    alt="Captured virtual try-on"
+                >
+
+            </div>
+
+
+            <div class="captured-image-actions">
+
+                <button
+                    type="button"
+                    id="downloadCapturedBtn"
+                    class="action-button download-button"
+                >
+                    Download Image
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CONTROLS
+        ================================================== -->
+
+        <section class="controls-card">
+
+
+            <div class="controls-header">
+
+                <h2>
+                    Clothing Controls
+                </h2>
+
+                <p>
+                    Fine-tune the clothing position and size.
+                </p>
+
+            </div>
+
+
+            <!-- =================================================
+                 X POSITION
+            ================================================== -->
+
+            <div class="control-group">
+
+                <div class="control-label">
+
+                    <span>
+                        Horizontal Position
+                    </span>
+
+                    <span id="xValue">
+                        0
+                    </span>
+
+                </div>
+
+
+                <input
+                    type="range"
+                    id="xSlider"
+                    min="-300"
+                    max="300"
+                    value="0"
+                    step="1"
+                >
+
+            </div>
+
+
+            <!-- =================================================
+                 Y POSITION
+            ================================================== -->
+
+            <div class="control-group">
+
+                <div class="control-label">
+
+                    <span>
+                        Vertical Position
+                    </span>
+
+                    <span id="yValue">
+                        0
+                    </span>
+
+                </div>
+
+
+                <input
+                    type="range"
+                    id="ySlider"
+                    min="-300"
+                    max="300"
+                    value="0"
+                    step="1"
+                >
+
+            </div>
+
+
+            <!-- =================================================
+                 SCALE
+            ================================================== -->
+
+            <div class="control-group">
+
+                <div class="control-label">
+
+                    <span>
+                        Clothing Size
+                    </span>
+
+                    <span id="scaleValue">
+                        1.00
+                    </span>
+
+                </div>
+
+
+                <input
+                    type="range"
+                    id="scaleSlider"
+                    min="0.50"
+                    max="2.00"
+                    value="1.00"
+                    step="0.01"
+                >
+
+            </div>
+
+
+            <!-- =================================================
+                 ACTION BUTTONS
+            ================================================== -->
+
+            <div class="control-actions">
+
+                <!--
+                    Kept for compatibility with the existing JS.
+                    The new primary capture method is the virtual
+                    camera button inside the camera feed.
+                -->
+
+                <button
+                    type="button"
+                    id="snapshotBtn"
+                    class="action-button snapshot-button"
+                >
+                    Take Snapshot
+                </button>
+
+
+                <button
+                    type="button"
+                    id="resetBtn"
+                    class="action-button reset-button"
+                >
+                    Reset
+                </button>
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="footer">
+
+        Fabrix — Virtual Try On
+
+    </footer>
+
+
+</div>
+
+
+<!-- =========================================================
+     MEDIAPIPE
+========================================================== -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"
+></script>
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"
+></script>
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+></script>
+
+
+<!-- =========================================================
+     FABRIX TRY-ON JAVASCRIPT
+========================================================== -->
+
+<script
+    src="{{ url_for('static', filename='js/try_on.js') }}"
+></script>
+
+<script
+    src="{{ url_for('static', filename='js/try_on_camera.js') }}"
+></script>
+
+<script
+    src="{{ url_for('static', filename='js/try_on_controls.js') }}"
+></script>
+
+
+</body>
+
+</html>

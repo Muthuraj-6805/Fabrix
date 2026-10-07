@@ -1,0 +1,1117 @@
+/* =========================================================
+   RESET
+========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
+body {
+    min-height: 100vh;
+
+    font-family:
+        Inter,
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f5f7fb,
+            #e9edf5
+        );
+
+    color: #171717;
+
+    padding: 30px 20px;
+}
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.try-on-page {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.try-on-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+
+.brand {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin-bottom: 6px;
+}
+
+
+.brand span {
+    color: #6366f1;
+}
+
+
+.subtitle {
+    color: #666;
+    font-size: 16px;
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+
+.try-on-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+
+/* =========================================================
+   CAMERA CARD
+========================================================= */
+
+.camera-card {
+    background: white;
+
+    border-radius: 24px;
+
+    padding: 24px;
+
+    box-shadow:
+        0 15px 50px
+        rgba(0, 0, 0, 0.08);
+}
+
+
+/* =========================================================
+   CAMERA HEADER
+========================================================= */
+
+.camera-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+
+.camera-header h2 {
+    font-size: 25px;
+    margin-bottom: 6px;
+}
+
+
+.camera-header p {
+    color: #777;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   CAMERA WRAPPER
+========================================================= */
+
+.camera-wrapper {
+    position: relative;
+
+    width: 100%;
+
+    max-width: 800px;
+
+    margin: 0 auto;
+
+    background: #111;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    aspect-ratio: 4 / 3;
+}
+
+
+/* =========================================================
+   VIDEO
+========================================================= */
+
+#video {
+    position: absolute;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   OUTPUT CANVAS
+========================================================= */
+
+#output {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    background: #111;
+
+    z-index: 1;
+}
+
+
+/* =========================================================
+   CAMERA LOADING
+========================================================= */
+
+.camera-loading {
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: rgba(17, 17, 17, 0.88);
+
+    color: white;
+
+    z-index: 10;
+
+    transition: opacity 0.3s ease;
+}
+
+
+.camera-loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+
+.camera-loading p {
+    margin-top: 14px;
+
+    font-size: 14px;
+
+    color: #ddd;
+}
+
+
+/* =========================================================
+   LOADING SPINNER
+========================================================= */
+
+.loading-spinner {
+    width: 38px;
+    height: 38px;
+
+    border: 3px solid
+        rgba(255, 255, 255, 0.25);
+
+    border-top-color: white;
+
+    border-radius: 50%;
+
+    animation:
+        tryOnSpin 0.8s linear infinite;
+}
+
+
+@keyframes tryOnSpin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   VIRTUAL CAMERA CAPTURE BUTTON
+========================================================= */
+
+.camera-capture-button {
+    position: absolute;
+
+    top: 18px;
+    right: 18px;
+
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 3px solid rgba(255, 255, 255, 0.95);
+
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, 0.55);
+
+    color: white;
+
+    cursor: pointer;
+
+    z-index: 8;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        opacity 0.2s ease,
+        box-shadow 0.2s ease;
+
+    backdrop-filter: blur(5px);
+
+    -webkit-backdrop-filter: blur(5px);
+
+    box-shadow:
+        0 4px 15px
+        rgba(0, 0, 0, 0.3);
+
+    user-select: none;
+}
+
+
+.camera-capture-button:hover {
+    transform: scale(1.08);
+
+    background: rgba(99, 102, 241, 0.9);
+
+    box-shadow:
+        0 6px 20px
+        rgba(0, 0, 0, 0.4);
+}
+
+
+.camera-capture-button:active {
+    transform: scale(0.94);
+}
+
+
+.camera-capture-button:focus {
+    outline: none;
+}
+
+
+.camera-capture-button:focus-visible {
+    outline: 3px solid white;
+
+    outline-offset: 4px;
+}
+
+
+.camera-icon {
+    font-size: 27px;
+
+    line-height: 1;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   CAMERA BUTTON - POINTING STATE
+========================================================= */
+
+.camera-capture-button.pointing {
+    background: rgba(99, 102, 241, 0.9);
+
+    transform: scale(1.08);
+
+    box-shadow:
+        0 0 0 5px rgba(99, 102, 241, 0.25),
+        0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+
+.camera-capture-button.pointing::after {
+    content: "";
+
+    position: absolute;
+
+    inset: -6px;
+
+    border-radius: 50%;
+
+    border: 3px solid rgba(255, 255, 255, 0.8);
+
+    animation:
+        captureTargetPulse 1s ease-in-out infinite;
+}
+
+
+@keyframes captureTargetPulse {
+
+    0% {
+        transform: scale(0.95);
+        opacity: 0.4;
+    }
+
+    50% {
+        transform: scale(1.08);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0.95);
+        opacity: 0.4;
+    }
+
+}
+
+
+/* =========================================================
+   CAMERA BUTTON - HIDDEN DURING COUNTDOWN
+========================================================= */
+
+.camera-capture-button.capture-active {
+    opacity: 0;
+
+    pointer-events: none;
+
+    transform: scale(0.7);
+}
+
+
+/* =========================================================
+   CAPTURE COUNTDOWN
+========================================================= */
+
+.capture-countdown {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%) scale(0.7);
+
+    width: 110px;
+    height: 110px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, 0.65);
+
+    border: 4px solid rgba(255, 255, 255, 0.9);
+
+    color: white;
+
+    font-size: 64px;
+
+    font-weight: 800;
+
+    line-height: 1;
+
+    z-index: 9;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+
+    text-shadow:
+        0 3px 12px
+        rgba(0, 0, 0, 0.5);
+}
+
+
+.capture-countdown.visible {
+    opacity: 1;
+
+    transform:
+        translate(-50%, -50%)
+        scale(1);
+
+    animation:
+        countdownPulse 1s ease-in-out;
+}
+
+
+@keyframes countdownPulse {
+
+    0% {
+        transform:
+            translate(-50%, -50%)
+            scale(1.3);
+    }
+
+    60% {
+        transform:
+            translate(-50%, -50%)
+            scale(1);
+    }
+
+    100% {
+        transform:
+            translate(-50%, -50%)
+            scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   CAPTURED IMAGE CARD
+========================================================= */
+
+.captured-image-card {
+    background: white;
+
+    border-radius: 24px;
+
+    padding: 25px;
+
+    box-shadow:
+        0 10px 40px
+        rgba(0, 0, 0, 0.06);
+
+    animation:
+        capturedImageAppear 0.4s ease;
+}
+
+
+.captured-image-card[hidden] {
+    display: none;
+}
+
+
+@keyframes capturedImageAppear {
+
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   CAPTURED IMAGE HEADER
+========================================================= */
+
+.captured-image-header {
+    text-align: center;
+
+    margin-bottom: 20px;
+}
+
+
+.captured-image-header h2 {
+    font-size: 22px;
+
+    margin-bottom: 6px;
+}
+
+
+.captured-image-header p {
+    color: #777;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   CAPTURED IMAGE WRAPPER
+========================================================= */
+
+.captured-image-wrapper {
+    width: 100%;
+
+    max-width: 800px;
+
+    margin: 0 auto;
+
+    overflow: hidden;
+
+    border-radius: 18px;
+
+    background: #111;
+
+    box-shadow:
+        0 8px 30px
+        rgba(0, 0, 0, 0.12);
+}
+
+
+#capturedImage {
+    display: block;
+
+    width: 100%;
+
+    height: auto;
+
+    max-height: 700px;
+
+    object-fit: contain;
+}
+
+
+/* =========================================================
+   CAPTURED IMAGE ACTIONS
+========================================================= */
+
+.captured-image-actions {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    margin-top: 20px;
+
+    flex-wrap: wrap;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status {
+    margin-top: 18px;
+
+    padding: 13px 16px;
+
+    border-radius: 12px;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    color: #555;
+
+    background: #f5f5f7;
+}
+
+
+.status.success {
+    color: #047857;
+
+    background: #ecfdf5;
+}
+
+
+.status.error {
+    color: #dc2626;
+
+    background: #fef2f2;
+}
+
+
+.status.processing {
+    color: #4f46e5;
+
+    background: #f0f0ff;
+}
+
+
+/* =========================================================
+   CONTROLS CARD
+========================================================= */
+
+.controls-card {
+    background: white;
+
+    border-radius: 24px;
+
+    padding: 25px;
+
+    box-shadow:
+        0 10px 40px
+        rgba(0, 0, 0, 0.06);
+}
+
+
+/* =========================================================
+   CONTROLS HEADER
+========================================================= */
+
+.controls-header {
+    margin-bottom: 25px;
+}
+
+
+.controls-header h2 {
+    font-size: 22px;
+
+    margin-bottom: 5px;
+}
+
+
+.controls-header p {
+    color: #777;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   CONTROL GROUP
+========================================================= */
+
+.control-group {
+    margin-bottom: 22px;
+}
+
+
+.control-label {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 10px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #444;
+}
+
+
+.control-label span:last-child {
+    min-width: 50px;
+
+    text-align: right;
+
+    color: #6366f1;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* =========================================================
+   RANGE SLIDERS
+========================================================= */
+
+.control-group input[type="range"] {
+    width: 100%;
+
+    height: 6px;
+
+    appearance: none;
+
+    -webkit-appearance: none;
+
+    background: #e5e7eb;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   CHROME / EDGE / SAFARI
+========================================================= */
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+
+    -webkit-appearance: none;
+
+    width: 20px;
+    height: 20px;
+
+    border-radius: 50%;
+
+    background: #6366f1;
+
+    border: 3px solid white;
+
+    box-shadow:
+        0 2px 8px
+        rgba(0, 0, 0, 0.2);
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   FIREFOX
+========================================================= */
+
+.control-group input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+
+    border-radius: 50%;
+
+    background: #6366f1;
+
+    border: 3px solid white;
+
+    box-shadow:
+        0 2px 8px
+        rgba(0, 0, 0, 0.2);
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   CONTROL ACTIONS
+========================================================= */
+
+.control-actions {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    margin-top: 28px;
+
+    flex-wrap: wrap;
+}
+
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+.action-button {
+    border: none;
+
+    padding: 13px 24px;
+
+    border-radius: 12px;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        opacity 0.2s,
+        transform 0.2s,
+        background 0.2s;
+
+    user-select: none;
+}
+
+
+.action-button:hover {
+    opacity: 0.88;
+
+    transform: translateY(-1px);
+}
+
+
+.action-button:active {
+    transform: translateY(0);
+}
+
+
+.action-button:focus-visible {
+    outline: 3px solid rgba(99, 102, 241, 0.35);
+
+    outline-offset: 3px;
+}
+
+
+/* =========================================================
+   SNAPSHOT BUTTON
+========================================================= */
+
+.snapshot-button {
+    background: #6366f1;
+
+    color: white;
+}
+
+
+/* =========================================================
+   DOWNLOAD BUTTON
+========================================================= */
+
+.download-button {
+    background: #6366f1;
+
+    color: white;
+
+    min-width: 170px;
+}
+
+
+/* =========================================================
+   RESET BUTTON
+========================================================= */
+
+.reset-button {
+    background: #171717;
+
+    color: white;
+}
+
+
+/* =========================================================
+   GESTURE CARD
+========================================================= */
+
+.gesture-card {
+    background: white;
+
+    border-radius: 24px;
+
+    padding: 25px;
+
+    box-shadow:
+        0 10px 40px
+        rgba(0, 0, 0, 0.06);
+}
+
+
+.gesture-card > h2 {
+    font-size: 22px;
+
+    margin-bottom: 20px;
+}
+
+
+/* =========================================================
+   GESTURE LIST
+========================================================= */
+
+.gesture-list {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 18px;
+}
+
+
+/* =========================================================
+   GESTURE ITEM
+========================================================= */
+
+.gesture-item {
+    display: flex;
+
+    gap: 12px;
+
+    padding: 18px;
+
+    background: #f7f7f8;
+
+    border-radius: 16px;
+}
+
+
+.gesture-icon {
+    flex-shrink: 0;
+
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #f0f0ff;
+
+    border-radius: 12px;
+
+    font-size: 21px;
+}
+
+
+.gesture-item h3 {
+    font-size: 15px;
+
+    margin-bottom: 6px;
+}
+
+
+.gesture-item p {
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    color: #777;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer {
+    text-align: center;
+
+    margin-top: 35px;
+
+    padding-bottom: 10px;
+
+    font-size: 13px;
+
+    color: #999;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .gesture-list {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 800px) {
+
+    body {
+        padding: 20px 14px;
+    }
+
+
+    .camera-card,
+    .controls-card,
+    .gesture-card,
+    .captured-image-card {
+        padding: 20px;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .brand {
+        font-size: 34px;
+    }
+
+
+    .camera-header h2 {
+        font-size: 21px;
+    }
+
+
+    .camera-wrapper {
+        border-radius: 14px;
+    }
+
+
+    .controls-header h2,
+    .gesture-card > h2,
+    .captured-image-header h2 {
+        font-size: 20px;
+    }
+
+
+    .control-actions {
+        flex-direction: column;
+    }
+
+
+    .action-button {
+        width: 100%;
+    }
+
+
+    .captured-image-actions {
+        flex-direction: column;
+    }
+
+
+    .download-button {
+        width: 100%;
+    }
+
+
+    .gesture-list {
+        grid-template-columns: 1fr;
+    }
+
+
+    .gesture-item {
+        padding: 14px;
+    }
+
+
+    .camera-capture-button {
+        top: 12px;
+        right: 12px;
+
+        width: 52px;
+        height: 52px;
+    }
+
+
+    .camera-icon {
+        font-size: 24px;
+    }
+
+
+    .capture-countdown {
+        width: 90px;
+        height: 90px;
+
+        font-size: 52px;
+    }
+
+}

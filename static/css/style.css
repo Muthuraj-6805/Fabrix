@@ -1,0 +1,727 @@
+/* =========================================================
+   RESET
+========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
+body {
+    min-height: 100vh;
+
+    font-family:
+        Inter,
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f5f7fb,
+            #e9edf5
+        );
+
+    color: #171717;
+
+    padding: 35px 20px;
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.brand {
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin-bottom: 8px;
+}
+
+.brand span {
+    color: #6366f1;
+}
+
+.subtitle {
+    font-size: 17px;
+    color: #666;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   UPLOAD CARD
+========================================================= */
+
+.upload-card {
+    background: white;
+
+    border-radius: 24px;
+
+    padding: 30px;
+
+    box-shadow:
+        0 15px 50px
+        rgba(0, 0, 0, 0.08);
+
+    margin-bottom: 35px;
+}
+
+
+/* =========================================================
+   DROP ZONE
+========================================================= */
+
+.drop-zone {
+    min-height: 260px;
+
+    border: 2px dashed #c8ccd5;
+
+    border-radius: 20px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.2s,
+        background 0.2s,
+        transform 0.2s;
+}
+
+.drop-zone:hover {
+    border-color: #6366f1;
+    background: #fafaff;
+}
+
+.drop-zone.dragging {
+    border-color: #6366f1;
+    background: #f0f0ff;
+    transform: scale(1.01);
+}
+
+
+/* =========================================================
+   UPLOAD ICON
+========================================================= */
+
+.upload-icon {
+    width: 65px;
+    height: 65px;
+
+    border-radius: 50%;
+
+    background: #f0f0ff;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 30px;
+
+    margin-bottom: 16px;
+}
+
+.drop-zone h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+}
+
+.drop-zone p {
+    color: #777;
+    margin-bottom: 18px;
+}
+
+.paste-hint {
+    font-size: 13px;
+    color: #999;
+    margin-top: 12px;
+}
+
+
+/* =========================================================
+   BROWSE BUTTON
+========================================================= */
+
+.browse-button {
+    border: none;
+
+    background: #171717;
+    color: white;
+
+    padding: 12px 24px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        opacity 0.2s,
+        transform 0.2s;
+}
+
+.browse-button:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+#fileInput {
+    display: none;
+}
+
+
+/* =========================================================
+   PREVIEW SECTION
+========================================================= */
+
+.preview-section {
+    display: none;
+    margin-top: 30px;
+    scroll-margin-top: 100px;
+}
+
+.preview-section.visible {
+    display: block;
+}
+
+.preview-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 25px;
+}
+
+
+/* =========================================================
+   PREVIEW CARD
+========================================================= */
+
+.preview-card {
+    background: #f7f7f8;
+
+    border-radius: 18px;
+
+    padding: 20px;
+}
+
+.preview-card h3 {
+    font-size: 16px;
+    margin-bottom: 14px;
+    color: #555;
+}
+
+
+/* =========================================================
+   PREVIEW IMAGE
+========================================================= */
+
+.image-container {
+    width: 100%;
+
+    min-height: 420px;
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    background: white;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.image-container img {
+    display: block;
+
+    width: 100%;
+    height: 420px;
+
+    object-fit: contain;
+
+    background: white;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.actions {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    margin-top: 22px;
+
+    flex-wrap: wrap;
+}
+
+
+/* =========================================================
+   PROCESS BUTTON
+========================================================= */
+
+.process-button {
+    border: none;
+
+    background: #6366f1;
+    color: white;
+
+    padding: 14px 28px;
+
+    border-radius: 12px;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        opacity 0.2s,
+        transform 0.2s;
+}
+
+.process-button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.process-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+/* =========================================================
+   DOWNLOAD BUTTON
+========================================================= */
+
+.download-button {
+    display: none;
+
+    text-decoration: none;
+
+    background: #171717;
+    color: white;
+
+    padding: 14px 28px;
+
+    border-radius: 12px;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        opacity 0.2s,
+        transform 0.2s;
+}
+
+.download-button:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+.download-button.visible {
+    display: inline-block;
+}
+
+
+/* =========================================================
+   TRY-ON BUTTON
+========================================================= */
+
+.try-on-button {
+    display: none;
+
+    border: none;
+
+    background: #16a34a;
+    color: white;
+
+    padding: 14px 28px;
+
+    border-radius: 12px;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        opacity 0.2s,
+        transform 0.2s,
+        background 0.2s;
+}
+
+.try-on-button:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    background: #15803d;
+}
+
+.try-on-button:active {
+    transform: translateY(0);
+}
+
+.try-on-button.visible {
+    display: inline-block;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status {
+    display: none;
+
+    text-align: center;
+
+    margin-top: 20px;
+
+    padding: 14px;
+
+    border-radius: 12px;
+
+    font-size: 14px;
+}
+
+.status.visible {
+    display: block;
+}
+
+.status.processing {
+    background: #f0f0ff;
+    color: #4f46e5;
+}
+
+.status.success {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.status.error {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   SPINNER
+========================================================= */
+
+.spinner {
+    display: inline-block;
+
+    width: 16px;
+    height: 16px;
+
+    border: 2px solid
+        rgba(79, 70, 229, 0.25);
+
+    border-top-color:
+        #4f46e5;
+
+    border-radius: 50%;
+
+    animation:
+        spin 0.8s linear infinite;
+
+    vertical-align: -3px;
+
+    margin-right: 7px;
+}
+
+@keyframes spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   CLOTHES SECTION
+========================================================= */
+
+.clothes-section {
+    margin-top: 45px;
+
+    /*
+     * Gives the browser a little room when using
+     * scrollIntoView().
+     */
+    scroll-margin-top: 20px;
+}
+
+.section-header {
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: 26px;
+    letter-spacing: -0.5px;
+}
+
+.section-header p {
+    color: #777;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+
+/* =========================================================
+   CLOTHES GRID
+========================================================= */
+
+.clothes-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 22px;
+}
+
+
+/* =========================================================
+   CLOTHING CARD
+========================================================= */
+
+.clothing-card {
+    background: white;
+
+    border-radius: 18px;
+
+    padding: 12px;
+
+    cursor: pointer;
+
+    border: 2px solid transparent;
+
+    box-shadow:
+        0 6px 25px
+        rgba(0, 0, 0, 0.06);
+
+    transition:
+        transform 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s;
+
+    display: block;
+}
+
+.clothing-card:hover {
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 12px 35px
+        rgba(0, 0, 0, 0.11);
+}
+
+.clothing-card.selected {
+    border-color: #6366f1;
+}
+
+
+/* =========================================================
+   CLOTHING IMAGE
+========================================================= */
+
+.clothing-image {
+    width: 100%;
+
+    aspect-ratio: 1 / 1;
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    background: white;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.clothing-image img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+
+    background: white;
+
+    display: block;
+}
+
+
+/* =========================================================
+   EMPTY CLOTHES
+========================================================= */
+
+.empty-clothes {
+    grid-column: 1 / -1;
+
+    text-align: center;
+
+    padding: 50px;
+
+    background: white;
+
+    border-radius: 18px;
+
+    color: #888;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer {
+    text-align: center;
+
+    margin-top: 50px;
+
+    font-size: 13px;
+
+    color: #999;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .clothes-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+    .image-container {
+        min-height: 360px;
+    }
+
+    .image-container img {
+        height: 360px;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    body {
+        padding: 20px 12px;
+    }
+
+    .brand {
+        font-size: 34px;
+    }
+
+    .upload-card {
+        padding: 18px;
+    }
+
+    .preview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .drop-zone {
+        min-height: 230px;
+    }
+
+    .clothes-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 14px;
+    }
+
+    .clothing-card {
+        padding: 8px;
+    }
+
+    .section-header {
+        margin-bottom: 15px;
+    }
+
+    .image-container {
+        min-height: 300px;
+    }
+
+    .image-container img {
+        height: 300px;
+    }
+
+    /*
+       Keep the three action buttons usable
+       on smaller screens.
+    */
+
+    .actions {
+        gap: 10px;
+    }
+
+    .process-button,
+    .download-button,
+    .try-on-button {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+
+}

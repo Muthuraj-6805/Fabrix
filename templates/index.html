@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Fabrix - Virtual Try On</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- =========================================================
+     HEADER
+========================================================== -->
+
+<header class="header">
+
+    <h1 class="brand">
+        Fabrix<span>.</span>
+    </h1>
+
+    <p class="subtitle">
+        Virtual Try On
+    </p>
+
+</header>
+
+
+<!-- =========================================================
+     UPLOAD SECTION
+========================================================== -->
+
+<section class="upload-card">
+
+
+    <div
+        class="drop-zone"
+        id="dropZone"
+    >
+
+        <div class="upload-icon">
+            ↑
+        </div>
+
+        <h2>
+            Upload or paste a clothing image
+        </h2>
+
+        <p>
+            Drag & drop an image here or choose one from your device
+        </p>
+
+        <button
+            type="button"
+            class="browse-button"
+            id="browseButton"
+        >
+            Choose Image
+        </button>
+
+        <div class="paste-hint">
+            You can also press Ctrl + V to paste an image
+        </div>
+
+    </div>
+
+
+    <input
+        type="file"
+        id="fileInput"
+        accept="image/*"
+    >
+
+
+    <!-- =====================================================
+         PREVIEW
+    ====================================================== -->
+
+    <div
+        class="preview-section"
+        id="previewSection"
+    >
+
+        <div class="preview-grid">
+
+
+            <!-- ORIGINAL -->
+
+            <div class="preview-card">
+
+                <h3>
+                    Original Image
+                </h3>
+
+                <div class="image-container">
+
+                    <img
+                        id="originalImage"
+                        alt="Original clothing image"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- RESULT -->
+
+            <div class="preview-card">
+
+                <h3>
+                    Processed Clothing
+                </h3>
+
+                <div class="image-container">
+
+                    <img
+                        id="resultImage"
+                        alt="Processed clothing"
+                    >
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- =================================================
+             ACTION BUTTONS
+        ================================================== -->
+
+        <div class="actions">
+
+            <button
+                type="button"
+                class="process-button"
+                id="processButton"
+            >
+                Process Clothing
+            </button>
+
+
+            <a
+                class="download-button"
+                id="downloadButton"
+                download="clothing.png"
+            >
+                Download PNG
+            </a>
+
+
+            <button
+                type="button"
+                class="try-on-button"
+                id="tryOnButton"
+            >
+                TRY - ON
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             STATUS
+        ================================================== -->
+
+        <div
+            class="status"
+            id="status"
+        ></div>
+
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     CLOTHES SECTION
+========================================================== -->
+
+<section
+    class="clothes-section"
+    id="clothesSection"
+>
+
+
+    <div class="section-header">
+
+        <h2>
+            Choose a Clothing
+        </h2>
+
+        <p>
+            Select an item from your collection
+        </p>
+
+    </div>
+
+
+    <div
+        class="clothes-grid"
+        id="clothesGrid"
+    >
+
+        <div class="empty-clothes">
+            Loading clothes...
+        </div>
+
+    </div>
+
+
+</section>
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer class="footer">
+
+    Fabrix — Virtual Try On
+
+</footer>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+
+</html>
